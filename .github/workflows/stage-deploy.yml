@@ -1,32 +1,74 @@
-name: Deploy to Apify Staging
+name: Deploy to Apify
 
 on:
+  workflow_call:
+    inputs:
+      actor_name:
+        type: string
+      environment:
+        type: choice
+        options:
+          - stage
+          - prod
+
   workflow_dispatch:
+    inputs:
+      actor_name:
+        type: string
   push:
     branches: 
       - main
       - feat/cicd
 
-env: 
-  actor_name: rahmat.nugraha~apify-rn
+  
+
+env:
+  # rahmat.nugraha~apify-rn
+  actor_name: ${{ inputs.actor_name }}
 
 jobs: 
+  to-deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      changes_detected: ${{ steps.check-changes.outputs.changes_detected }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Check changes
+        id: check-changes
+        run: |
+          if git diff --quiet HEAD^ HEAD --relative; then
+            echo "changes_detected=false" >> "$GITHUB_OUTPUT"
+            echo "No changes, skipping next process"
+          else
+            echo "changes_detected=true" >> "$GITHUB_OUTPUT"
+            echo "Changes detected, proceeding"
+          fi
+
+
+      - name: Check output
+        run: |
+          echo "steps.check-changes.outputs.changes_detected: \"${{ steps.check-changes.outputs.changes_detected }}\""
+
   deploy: 
     name: Deploy
     runs-on: ubuntu-latest
     steps: 
-      - name: Checkout
-        uses: actions/checkout@v4
+
       - name: Pre-deploy
         id: pre-deploy
         run: | 
           tag="stage-$( echo ${{ github.sha }} | cut -c1-7 )"
-          build_url="https://api.apify.com/v2/acts/${actor_name}/builds/?token=${{ secrets.apify_token }}&version=0.0&tag=${tag}&waitForFinish=60"
+          if [[ ${{ inputs.environment }} == "prod" ]]; then
+            tag="latest"
+          fi
+          build_url="https://api.apify.com/v2/acts/${actor_name}/builds/?version=0.0&tag=${tag}&waitForFinish=60"
           echo "tag=$tag" >> $GITHUB_OUTPUT
           echo "build_url=$build_url" >> $GITHUB_OUTPUT
-      # TODO: run test
-      # - name: run test
-      - name: Deploy to Apify Staging
+      - name: Deploy to Apify ${{ inputs.environment }}
         uses: distributhor/workflow-webhook@v3
         with:
           webhook_url: ${{ steps.pre-deploy.outputs.build_url }}
