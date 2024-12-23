@@ -23,7 +23,7 @@ jobs:
           tag="stage-$( echo {{ github.sha }} | cut -c1-7 )"
           build_url="https://api.apify.com/v2/acts/${actor_name}/builds/?token=${{ secrets.apify_token }}&version=0.0&tag=${tag}&waitForFinish=60"
           echo "tag=$tag" >> $GITHUB_OUTPUT
-          echo "build_url=build_url" >> $GITHUB_OUTPUT
+          echo "build_url=$build_url" >> $GITHUB_OUTPUT
       # TODO: run test
       # - name: run test
       - name: Deploy to Apify Staging
