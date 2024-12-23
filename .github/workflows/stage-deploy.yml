@@ -5,11 +5,12 @@ on:
   push:
     branches: 
       - main
+      - feat/cicd
 
 env: 
   actor_name: apify-rn
 
-job: 
+jobs: 
   deploy: 
     name: Deploy
     runs-on: ubuntu-latest
