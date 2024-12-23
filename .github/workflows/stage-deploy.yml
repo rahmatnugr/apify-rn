@@ -1,0 +1,32 @@
+name: Deploy to Apify Staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches: 
+      - main
+
+env: 
+  actor_name: apify-rn
+
+job: 
+  deploy: 
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Pre-deploy
+        id: pre-deploy
+        run: | 
+          tag="stage-$( echo {{ github.sha }} | cut -c1-7 )"
+          build_url="https://api.apify.com/v2/acts/${{ envs.actor_name }}/builds/?token=${{ secrets.apify_token }}&version=0.0&tag=${tag}&waitForFinish=60"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "build_url=build_url" >> $GITHUB_OUTPUT
+      # TODO: run test
+      # - name: run test
+      - name: Deploy to Apify Staging
+        uses: distributhor/workflow-webhook@v3
+        with:
+          webhook_url: ${{ steps.pre-deploy.outputs.build_url }}
+          webhook_secret: ${{ secrets.apify_token }}
