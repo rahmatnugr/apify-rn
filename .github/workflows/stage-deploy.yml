@@ -18,9 +18,7 @@ on:
   push:
     branches: 
       - main
-      - feat/cicd
-
-  
+      # - feat/cicd
 
 env:
   # rahmat.nugraha~apify-rn
@@ -40,15 +38,8 @@ jobs:
       - name: Check changes
         id: check-changes
         run: |
-          if git diff --quiet HEAD^ HEAD --relative; then
-            echo "changes_detected=false" >> "$GITHUB_OUTPUT"
-            echo "No changes, skipping next process"
-          else
-            echo "changes_detected=true" >> "$GITHUB_OUTPUT"
-            echo "Changes detected, proceeding"
-          fi
-
-
+          changed_dirs=$(git diff --dirstat=files,0 HEAD~1 | sed 's/^[ 0-9.]\+% //g' | grep -E '^[^/]+/?$' | sed 's|/||g' | grep '^apify')
+        
       - name: Check output
         run: |
           echo "steps.check-changes.outputs.changes_detected: \"${{ steps.check-changes.outputs.changes_detected }}\""
@@ -57,7 +48,6 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     steps: 
-
       - name: Pre-deploy
         id: pre-deploy
         run: | 
