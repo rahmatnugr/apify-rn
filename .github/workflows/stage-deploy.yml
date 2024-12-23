@@ -8,7 +8,7 @@ on:
       - feat/cicd
 
 env: 
-  actor_name: apify-rn
+  actor_name: rahmat.nugraha/apify-rn
 
 jobs: 
   deploy: 
