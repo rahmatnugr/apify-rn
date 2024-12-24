@@ -41,9 +41,9 @@ jobs:
       fail-fast: false
       matrix:
         dir_name: ${{ fromJSON(needs.to-deploy.outputs.changed_dirs) }}
-      uses: ./.github/workflows/common-test-deploy.yml
-      with: 
-        dir_name: ${{ matrix.dir_name }}
-        event: ${{ github.event_name }}
-        branch: ${{ github.ref_name }}
-      secrets: inherit
+    uses: ./.github/workflows/common-test-deploy.yml
+    with: 
+      dir_name: ${{ matrix.dir_name }}
+      event: ${{ github.event_name }}
+      branch: ${{ github.ref_name }}
+    secrets: inherit
