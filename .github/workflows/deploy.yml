@@ -1,0 +1,49 @@
+name: Deploy to Apify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: 
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs: 
+  to-deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_dirs: ${{ steps.check-changes.outputs.changed_dirs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check changes
+        id: check-changes
+        run: |
+          echo "Event triggerers: ${{ github.event_name }}"
+          changed_dirs=$(
+            git diff --dirstat=files,0 HEAD~1 | \
+            sed 's/^[ 0-9.]\+% //g' | \
+            grep -E '^[^/]+/?$' | \
+            sed 's|/||g' | \
+            grep '^apify' | \
+            jq -R . | \
+            jq -s -c .
+          )
+          echo "Changed dirs: $changed_dirs"
+          echo "changed_dirs=$changed_dirs" >> $GITHUB_OUTPUT
+
+  test-deploy-all:
+    strategy:
+      fail-fast: false
+      matrix:
+        dir_name: ${{ fromJSON(needs.to-deploy.outputs.changed_dirs) }}
+      uses: ./.github/workflows/common-test-deploy.yml
+      with: 
+        dir_name: ${{ matrix.dir_name }}
+        event: ${{ github.event_name }}
+        branch: ${{ github.ref_name }}
+      secrets: inherit
