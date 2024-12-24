@@ -38,9 +38,6 @@ jobs:
             jq -R . | \
             jq -s -c .
           )
-          changed_dirs=$(
-            git diff --dirstat=files,0 HEAD~1 | sed 's/^[ 0-9.]\+% //g' | grep -E '^[^/]+/?$' | sed 's|/||g' | grep '^apify' | jq -R . | jq -s -c .
-          )
           echo "Changed dirs: $changed_dirs"
           echo "changed_dirs=$changed_dirs" >> $GITHUB_OUTPUT
 
