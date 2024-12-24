@@ -37,6 +37,7 @@ jobs:
           echo "changed_dirs=$changed_dirs" >> $GITHUB_OUTPUT
 
   test-deploy-all:
+    if: ${{ needs.to-deploy.outputs.changed_dirs }}
     strategy:
       fail-fast: false
       matrix:
