@@ -1,0 +1,28 @@
+{
+	"name": "apify-rn",
+	"version": "0.0.1",
+	"type": "module",
+	"description": "This is an example of an Apify actor.",
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"dependencies": {
+		"apify": "^3.2.6",
+		"axios": "^1.5.0",
+		"cheerio": "^1.0.0-rc.12"
+	},
+	"scripts": {
+		"start": "node ./src/main.js",
+		"test": "node --experimental-vm-modules node_modules/.bin/jest"
+	},
+	"author": "It's not you it's me",
+	"license": "ISC",
+	"devDependencies": {
+		"@babel/core": "^7.26.0",
+		"@babel/preset-env": "^7.26.0",
+		"@jest/globals": "^29.0.0",
+		"babel-jest": "^29.7.0",
+		"jest": "^29.0.0",
+		"jest-mock-axios": "^4.8.0"
+	}
+}

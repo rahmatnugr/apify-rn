@@ -1,0 +1,16 @@
+{
+	"actorSpecification": 1,
+	"name": "apify-rn-2",
+	"title": "Scrape single page in JavaScript",
+	"description": "Scrape data from single page with provided URL.",
+	"version": "0.0",
+	"meta": {
+		"templateId": "js-start"
+	},
+	"input": "./input_schema.json",
+	"dockerfile": "./Dockerfile",
+	"environmentVariables": {
+		"STAGE": "@STAGE",
+		"API_URL": "@API_URL"
+	}
+}

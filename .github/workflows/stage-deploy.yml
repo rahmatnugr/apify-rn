@@ -1,0 +1,132 @@
+name: Deploy to Apify
+
+on:
+  # workflow_call:
+  #   inputs:
+  #     actor_name:
+  #       type: string
+  #     environment:
+  #       type: choice
+  #       options:
+  #         - stage
+  #         - prod
+  workflow_dispatch:
+  push:
+    branches: 
+      - main
+
+jobs: 
+  to-deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_dirs: ${{ steps.check-changes.outputs.changed_dirs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check changes
+        id: check-changes
+        run: |
+          changed_dirs=$(
+            git diff --dirstat=files,0 HEAD~1 | \
+            sed 's/^[ 0-9.]\+% //g' | \
+            grep -E '^[^/]+/?$' | \
+            sed 's|/||g' | \
+            grep '^apify' | \
+            jq -R . | \
+            jq -s -c .
+          )
+          echo "Changed dirs: $changed_dirs"
+          echo "changed_dirs=$changed_dirs" >> $GITHUB_OUTPUT
+
+  test: 
+    name: Test
+    runs-on: ubuntu-latest
+    needs: to-deploy
+    strategy:
+      matrix:
+        item: ${{ fromJSON(needs.to-deploy.outputs.changed_dirs) }}
+    outputs: 
+      dir_name: ${{ matrix.item }}
+    defaults:
+      run:
+        working-directory: ./${{ matrix.item }}
+    steps: 
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pre-test
+        run: |
+          echo "Ref/Branch Name: ${{ github.ref_name }}"
+          echo "Event triggerers: ${{ github.event_name }}"
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies and run test
+        run: |
+          npm install
+          npm run test    
+
+  deploy: 
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: test
+
+    env:
+      actor_name: |
+        ${{
+          fromJson('
+            {
+              "apify-rn": "rahmat.nugraha~apify-rn",
+              "apify-rn-2": "rahmat.nugraha~apify-rn-2"
+            }
+          ')[needs.test.outputs.dir_name]
+        }}
+
+    defaults:
+      run:
+        working-directory: ./${{ needs.test.outputs.dir_name }}
+
+    steps: 
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Print module name
+        run: |
+          echo ${{ needs.test.outputs.dir_name }}
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Install apify-cli
+        run: npm install apify-cli -g
+
+      - name: Pre-deploy
+        id: pre-deploy
+        run: | 
+          # Generate tag based on the environment
+          tag="stage-$( echo ${{ github.sha }} | cut -c1-7 )"
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+            tag="latest"
+          fi
+          
+          # Set output
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+
+      # TODO: Set secrets
+      # - name: Set Secrets
+
+      - name: Deploy actors ${{ needs.test.outputs.dir_name }}
+        run: |
+          # Apify login
+          apify login --token ${{ secrets.APIFY_TOKEN }}
+
+          # Apify push
+          apify push ${actor_name} -b ${{ steps.pre-deploy.outputs.tag }} --no-prompt
