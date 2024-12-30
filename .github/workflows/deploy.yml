@@ -48,4 +48,13 @@ jobs:
       dir_name: ${{ matrix.dir_name }}
       event: ${{ github.event_name }}
       branch: ${{ github.ref_name }}
+      actor_name: |
+        ${{
+          fromJson('
+            {
+              "apify-rn": "rahmat.nugraha~apify-rn",
+              "apify-rn-2": "rahmat.nugraha~apify-rn-2"
+            }
+          ')[matrix.dir_name]
+        }}
     secrets: inherit

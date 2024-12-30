@@ -10,6 +10,8 @@ on:
         description: github event triggerer 
       branch: 
         type: string
+      actor_name: 
+        type: string
 
 jobs:
   test: 
@@ -43,15 +45,7 @@ jobs:
       - test
 
     env:
-      actor_name: |
-        ${{
-          fromJson('
-            {
-              "apify-rn": "rahmat.nugraha~apify-rn",
-              "apify-rn-2": "rahmat.nugraha~apify-rn-2"
-            }
-          ')[inputs.dir_name]
-        }}
+      actor_name: ${{ inputs.actor_name }}
 
     defaults:
       run:
